@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cricut-Based Vinyl Project Calculator</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
             --cricut-green: #00A652;
@@ -24,6 +27,32 @@
             padding: 25px;
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .donation-banner {
+            background: linear-gradient(45deg, #00A652, #008442);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .donation-banner a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            padding: 5px 15px;
+            border: 2px solid white;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .donation-banner a:hover {
+            background: white;
+            color: #00A652;
         }
 
         h1 {
@@ -87,9 +116,34 @@
             border-radius: 6px;
             margin-bottom: 20px;
         }
+
+        .export-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .export-buttons button {
+            flex: 1;
+            background: #666;
+        }
+
+        .quote-container {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
+    <div class="donation-banner">
+        <h3>Help Local Makers Make! 🎨</h3>
+        <p>Support independent creators and keep the craft community growing</p>
+        <a href="https://cash.app/$godzillamasters" target="_blank">Donate via Cash App</a>
+        <a href="https://github.com/sponsors/jmenichole" target="_blank">GitHub Sponsorship</a>
+    </div>
+
     <div class="calculator-card">
         <h1>Cricut Project Cost Calculator</h1>
         
@@ -144,13 +198,19 @@
         </form>
 
         <div id="quoteResult"></div>
+
+        <div class="export-buttons" id="exportButtons" style="display: none;">
+            <button onclick="exportAsPDF()">Download Quote PDF</button>
+            <button onclick="exportAsImage()">Download Quote Image</button>
+        </div>
     </div>
 
     <script>
-        // Cricut material prices (as of 2025)
+        window.jsPDF = window.jspdf.jsPDF;
+
         const materialPrices = {
             'premium': {
-                price: 14.99, // USD per 12"x48" roll
+                price: 14.99,
                 sqInchPrice: 14.99 / (12 * 48)
             },
             'removable': {
@@ -174,7 +234,6 @@
         document.getElementById('estimateForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Get form values
             const vinylType = document.getElementById('vinylType').value;
             const width = parseFloat(document.getElementById('width').value);
             const height = parseFloat(document.getElementById('height').value);
@@ -183,74 +242,96 @@
             const complexWeeding = document.getElementById('weeding').checked;
             const rush = document.getElementById('rush').checked;
 
-            // Calculate material cost
             const area = width * height;
             const materialCost = area * materialPrices[vinylType].sqInchPrice * quantity;
 
-            // Calculate labor time (in hours)
-            let laborTime = 0.25; // Base setup time
-            laborTime += (area / 144) * 0.5; // Time per square foot
+            let laborTime = 0.25;
+            laborTime += (area / 144) * 0.5;
             if (complexWeeding) laborTime *= 1.5;
             laborTime *= quantity;
 
-            // Calculate costs
             const laborCost = laborTime * laborRate;
-            const setupCost = 5; // Basic setup fee
+            const setupCost = 5;
             const rushFee = rush ? (materialCost + laborCost) * 0.25 : 0;
-            
-            // Business costs
             const overhead = (materialCost + laborCost + setupCost) * 0.15;
             const profit = (materialCost + laborCost + setupCost + overhead) * 0.20;
-            
-            // Total
             const total = materialCost + laborCost + setupCost + overhead + profit + rushFee;
 
-            // Display results
             const resultHtml = `
-                <h3>Project Quote</h3>
-                <table>
-                    <tr>
-                        <td>Material (${materialPrices[vinylType].price}/roll)</td>
-                        <td>USD ${materialCost.toFixed(2)}</td>
-                    </tr>
-                    <tr>
-                        <td>Labor (${laborTime.toFixed(2)} hrs @ USD ${laborRate}/hr)</td>
-                        <td>USD ${laborCost.toFixed(2)}</td>
-                    </tr>
-                    <tr>
-                        <td>Setup Fee</td>
-                        <td>USD ${setupCost.toFixed(2)}</td>
-                    </tr>
-                    <tr>
-                        <td>Overhead (15%)</td>
-                        <td>USD ${overhead.toFixed(2)}</td>
-                    </tr>
-                    <tr>
-                        <td>Profit (20%)</td>
-                        <td>USD ${profit.toFixed(2)}</td>
-                    </tr>
-                    ${rush ? `
-                    <tr>
-                        <td>Rush Fee</td>
-                        <td>USD ${rushFee.toFixed(2)}</td>
-                    </tr>
-                    ` : ''}
-                    <tr>
-                        <th>Total Quote</th>
-                        <th>USD ${total.toFixed(2)}</th>
-                    </tr>
-                </table>
-                <p style="margin-top: 15px; font-size: 0.9em; color: #666;">
-                    *Based on Cricut material prices<br>
-                    *Quantity: ${quantity} pieces<br>
-                    *Size: ${width}" x ${height}" (${area} sq inches each)
-                </p>
+                <div class="quote-container">
+                    <h2 style="color: var(--cricut-green);">Vinyl Project Quote</h2>
+                    <table>
+                        <tr>
+                            <td>Material (${materialPrices[vinylType].price}/roll)</td>
+                            <td>USD ${materialCost.toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td>Labor (${laborTime.toFixed(2)} hrs @ USD ${laborRate}/hr)</td>
+                            <td>USD ${laborCost.toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td>Setup Fee</td>
+                            <td>USD ${setupCost.toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td>Overhead (15%)</td>
+                            <td>USD ${overhead.toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td>Profit (20%)</td>
+                            <td>USD ${profit.toFixed(2)}</td>
+                        </tr>
+                        ${rush ? `
+                        <tr>
+                            <td>Rush Fee</td>
+                            <td>USD ${rushFee.toFixed(2)}</td>
+                        </tr>
+                        ` : ''}
+                        <tr>
+                            <th>Total Quote</th>
+                            <th>USD ${total.toFixed(2)}</th>
+                        </tr>
+                    </table>
+                    <div style="margin-top: 15px; font-size: 0.9em; color: #666;">
+                        <p>*Based on Cricut material prices</p>
+                        <p>*Quantity: ${quantity} pieces</p>
+                        <p>*Size: ${width}" x ${height}" (${area} sq inches each)</p>
+                        <p>*Generated on: ${new Date().toLocaleDateString()}</p>
+                    </div>
+                </div>
             `;
 
             const resultDiv = document.getElementById('quoteResult');
             resultDiv.innerHTML = resultHtml;
             resultDiv.style.display = 'block';
+            
+            document.getElementById('exportButtons').style.display = 'flex';
         });
+
+        function exportAsPDF() {
+            const element = document.querySelector('.quote-container');
+            html2canvas(element).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'px',
+                    format: [canvas.width, canvas.height]
+                });
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                pdf.save('vinyl-project-quote.pdf');
+            });
+        }
+
+        function exportAsImage() {
+            const element = document.querySelector('.quote-container');
+            html2canvas(element).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'vinyl-project-quote.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
     </script>
 </body>
 </html>
