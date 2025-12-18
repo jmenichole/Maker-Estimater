@@ -36,7 +36,7 @@ Vercel is the recommended platform for this application because it provides:
    | Name | Value | Description |
    |------|-------|-------------|
    | `OPENAI_API_KEY` | `sk-proj-...` | Your OpenAI API key |
-   | `VERCEL_AI_GATEWAY_URL` | (optional) | AI Gateway URL if configured |
+   | `OPENAI_BASE_URL` | (optional) | AI Gateway URL if configured |
 
    **Important**: Select all environments (Production, Preview, Development)
 
@@ -110,11 +110,11 @@ Once connected to Vercel:
 
 2. **Copy the Gateway URL** (looks like):
    ```
-   https://gateway.ai.cloudflare.com/v1/YOUR_ACCOUNT/YOUR_GATEWAY/openai
+   https://gateway.vercel.com/v1/openai
    ```
 
 3. **Add as Environment Variable**:
-   - Name: `VERCEL_AI_GATEWAY_URL`
+   - Name: `OPENAI_BASE_URL`
    - Value: The gateway URL from above
    - Environments: All
 

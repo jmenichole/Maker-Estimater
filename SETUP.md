@@ -86,9 +86,12 @@ vercel
    - **Environments**: Select all (Production, Preview, Development)
 
    **Optional:**
-   - **Name**: `VERCEL_AI_GATEWAY_URL`
-   - **Value**: Your AI Gateway URL (if using Vercel AI Gateway)
+   - **Name**: `OPENAI_BASE_URL`
+   - **Value**: Your AI Gateway URL (if using an AI Gateway like Vercel or Cloudflare)
    - **Environments**: Select all (Production, Preview, Development)
+   - **Examples**:
+     - Vercel: `https://gateway.vercel.com/v1/openai`
+     - Cloudflare: `https://gateway.ai.cloudflare.com/v1/YOUR_ACCOUNT/YOUR_GATEWAY/openai`
 
 4. Click "Save"
 
@@ -106,7 +109,7 @@ The Vercel AI Gateway provides additional benefits like caching, analytics, and 
 4. Copy the gateway URL provided
 5. Add it as an environment variable:
 
-   - **Name**: `VERCEL_AI_GATEWAY_URL`
+   - **Name**: `OPENAI_BASE_URL`
    - **Value**: The gateway URL from Vercel
    - **Environments**: Select all
 

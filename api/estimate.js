@@ -1,9 +1,10 @@
 import { OpenAI } from 'openai';
 
-// Initialize OpenAI client with Vercel AI Gateway
+// Initialize OpenAI client
+// Supports custom baseURL for AI gateways (Vercel, Cloudflare, etc.)
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  baseURL: process.env.VERCEL_AI_GATEWAY_URL || 'https://api.openai.com/v1',
+  baseURL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
 });
 
 // Regional pricing multipliers based on cost of living

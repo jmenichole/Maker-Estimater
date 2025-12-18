@@ -108,8 +108,8 @@ Create a `.env` file in the root directory with the following variables:
 # Required: OpenAI API Key
 OPENAI_API_KEY=sk-your-openai-api-key-here
 
-# Optional: Vercel AI Gateway URL
-VERCEL_AI_GATEWAY_URL=https://gateway.ai.cloudflare.com/v1/your-account-id/your-gateway-id/openai
+# Optional: OpenAI Base URL (for AI Gateway)
+OPENAI_BASE_URL=https://gateway.vercel.com/v1/openai
 ```
 
 **Getting an OpenAI API Key:**
@@ -141,7 +141,7 @@ vercel
    - Go to your project settings
    - Navigate to "Environment Variables"
    - Add `OPENAI_API_KEY`
-   - Optionally add `VERCEL_AI_GATEWAY_URL`
+   - Optionally add `OPENAI_BASE_URL`
 
 ## Development
 
