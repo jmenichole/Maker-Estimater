@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cricut-Based Vinyl Project Calculator</title>
+    <title>AI-Powered Vinyl Project Calculator | Maker Estimater</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -152,6 +152,13 @@ body {
     <div class="calculator-card">
         <h1>Cricut Project Cost Calculator</h1>
         
+        <div id="aiStatus" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); padding: 10px; border-radius: 6px; margin-bottom: 20px; text-align: center; font-size: 0.9em; display: none;">
+            <span style="font-size: 1.2em;">🤖</span> <strong>AI-Powered Pricing Active</strong>
+            <div style="font-size: 0.85em; margin-top: 5px; color: #2e7d32;">
+                Location-aware estimates with smart recommendations
+            </div>
+        </div>
+        
         <form id="estimateForm">
             <div class="material-info">
                 <h3>Material Selection</h3>
@@ -223,9 +230,20 @@ body {
                 if (response.ok) {
                     userLocation = await response.json();
                     console.log('Location detected:', userLocation);
+                    
+                    // Show AI status banner
+                    const aiStatus = document.getElementById('aiStatus');
+                    if (aiStatus) {
+                        aiStatus.style.display = 'block';
+                    }
                 }
             } catch (error) {
                 console.error('Error detecting location:', error);
+                // Hide AI status banner if API is not available
+                const aiStatus = document.getElementById('aiStatus');
+                if (aiStatus) {
+                    aiStatus.style.display = 'none';
+                }
             }
         }
 
