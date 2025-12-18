@@ -2,6 +2,8 @@
 
 A Progressive Web App (PWA) designed to help craft makers calculate accurate price quotes for vinyl projects, powered by AI for intelligent pricing estimates.
 
+**🚀 [Quick Start Guide →](QUICKSTART.md)** | **📖 [Setup Instructions →](SETUP.md)** | **🚢 [Deployment Guide →](DEPLOYMENT.md)**
+
 ## Features
 
 - 🤖 **AI-Powered Pricing** - Uses Vercel AI Gateway with OpenAI to generate accurate estimates
