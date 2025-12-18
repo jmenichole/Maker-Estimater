@@ -213,30 +213,34 @@ body {
     <script>
         window.jsPDF = window.jspdf.jsPDF;
 
-        const materialPrices = {
-            'premium': {
-                price: 14.99,
-                sqInchPrice: 14.99 / (12 * 48)
-            },
-            'removable': {
-                price: 13.99,
-                sqInchPrice: 13.99 / (12 * 48)
-            },
-            'holographic': {
-                price: 19.99,
-                sqInchPrice: 19.99 / (12 * 48)
-            },
-            'glitter': {
-                price: 17.99,
-                sqInchPrice: 17.99 / (12 * 48)
-            },
-            'iron-on': {
-                price: 16.99,
-                sqInchPrice: 16.99 / (12 * 48)
+        // Store user location
+        let userLocation = null;
+
+        // Detect user location on page load
+        async function detectLocation() {
+            try {
+                const response = await fetch('/api/location');
+                if (response.ok) {
+                    userLocation = await response.json();
+                    console.log('Location detected:', userLocation);
+                }
+            } catch (error) {
+                console.error('Error detecting location:', error);
             }
+        }
+
+        // Call location detection on page load
+        detectLocation();
+
+        const materialPrices = {
+            'premium': 14.99,
+            'removable': 13.99,
+            'holographic': 19.99,
+            'glitter': 17.99,
+            'iron-on': 16.99
         };
 
-        document.getElementById('estimateForm').addEventListener('submit', function(e) {
+        document.getElementById('estimateForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const vinylType = document.getElementById('vinylType').value;
@@ -247,70 +251,200 @@ body {
             const complexWeeding = document.getElementById('weeding').checked;
             const rush = document.getElementById('rush').checked;
 
-            const area = width * height;
-            const materialCost = area * materialPrices[vinylType].sqInchPrice * quantity;
-
-            let laborTime = 0.25;
-            laborTime += (area / 144) * 0.5;
-            if (complexWeeding) laborTime *= 1.5;
-            laborTime *= quantity;
-
-            const laborCost = laborTime * laborRate;
-            const setupCost = 5;
-            const rushFee = rush ? (materialCost + laborCost) * 0.25 : 0;
-            const overhead = (materialCost + laborCost + setupCost) * 0.15;
-            const profit = (materialCost + laborCost + setupCost + overhead) * 0.20;
-            const total = materialCost + laborCost + setupCost + overhead + profit + rushFee;
-
-            const resultHtml = `
-                <div class="quote-container">
-                    <h2 style="color: var(--cricut-green);">Vinyl Project Quote</h2>
-                    <table>
-                        <tr>
-                            <td>Material (${materialPrices[vinylType].price}/roll)</td>
-                            <td>USD ${materialCost.toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>Labor (${laborTime.toFixed(2)} hrs @ USD ${laborRate}/hr)</td>
-                            <td>USD ${laborCost.toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>Setup Fee</td>
-                            <td>USD ${setupCost.toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>Overhead (15%)</td>
-                            <td>USD ${overhead.toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>Profit (20%)</td>
-                            <td>USD ${profit.toFixed(2)}</td>
-                        </tr>
-                        ${rush ? `
-                        <tr>
-                            <td>Rush Fee</td>
-                            <td>USD ${rushFee.toFixed(2)}</td>
-                        </tr>
-                        ` : ''}
-                        <tr>
-                            <th>Total Quote</th>
-                            <th>USD ${total.toFixed(2)}</th>
-                        </tr>
-                    </table>
-                    <div style="margin-top: 15px; font-size: 0.9em; color: #666;">
-                        <p>*Based on Cricut material prices</p>
-                        <p>*Quantity: ${quantity} pieces</p>
-                        <p>*Size: ${width}" x ${height}" (${area} sq inches each)</p>
-                        <p>*Generated on: ${new Date().toLocaleDateString()}</p>
-                    </div>
-                </div>
-            `;
-
+            // Show loading state
             const resultDiv = document.getElementById('quoteResult');
-            resultDiv.innerHTML = resultHtml;
+            resultDiv.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <div style="display: inline-block; border: 3px solid var(--cricut-green); border-radius: 50%; border-top: 3px solid transparent; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
+                    <p style="margin-top: 10px; color: var(--cricut-green); font-weight: bold;">Generating AI-powered estimate...</p>
+                    <p style="font-size: 0.9em; color: #666;">Analyzing location, materials, and market rates</p>
+                </div>
+                <style>
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+            `;
             resultDiv.style.display = 'block';
-            
-            document.getElementById('exportButtons').style.display = 'flex';
+
+            try {
+                // Call AI-powered estimation API
+                const response = await fetch('/api/estimate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        vinylType,
+                        width,
+                        height,
+                        quantity,
+                        laborRate,
+                        complexWeeding,
+                        rush,
+                        location: userLocation
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to get estimate');
+                }
+
+                const estimate = await response.json();
+                
+                const area = width * height;
+                const resultHtml = `
+                    <div class="quote-container">
+                        <h2 style="color: var(--cricut-green);">
+                            🤖 AI-Powered Vinyl Project Quote
+                        </h2>
+                        ${estimate.metadata?.fallback ? `
+                            <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                                <strong>⚠️ Note:</strong> Using fallback calculation. AI service temporarily unavailable.
+                            </div>
+                        ` : ''}
+                        <table>
+                            <tr>
+                                <td>Material Cost (${materialPrices[vinylType]}/roll)</td>
+                                <td>USD ${estimate.materialCost.toFixed(2)}</td>
+                            </tr>
+                            ${estimate.materialWaste ? `
+                            <tr>
+                                <td style="font-size: 0.9em; color: #666;">└ Waste Factor</td>
+                                <td style="font-size: 0.9em; color: #666;">USD ${estimate.materialWaste.toFixed(2)}</td>
+                            </tr>
+                            ` : ''}
+                            <tr>
+                                <td>Labor (${estimate.laborHours.toFixed(2)} hrs @ USD ${laborRate}/hr)</td>
+                                <td>USD ${estimate.laborCost.toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <td>Setup Fee</td>
+                                <td>USD ${estimate.setupFee.toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <td>Overhead (15%)</td>
+                                <td>USD ${estimate.overhead.toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <td>Profit (20%)</td>
+                                <td>USD ${estimate.profit.toFixed(2)}</td>
+                            </tr>
+                            ${estimate.rushFee > 0 ? `
+                            <tr>
+                                <td>Rush Fee (25%)</td>
+                                <td>USD ${estimate.rushFee.toFixed(2)}</td>
+                            </tr>
+                            ` : ''}
+                            <tr>
+                                <th>Total Quote</th>
+                                <th>USD ${estimate.total.toFixed(2)}</th>
+                            </tr>
+                        </table>
+                        <div style="margin-top: 15px; font-size: 0.9em; color: #666;">
+                            <p><strong>📍 Location:</strong> ${estimate.metadata?.location?.city || 'Unknown'}, ${estimate.metadata?.location?.region || ''} ${estimate.metadata?.location?.country || 'US'}</p>
+                            ${estimate.metadata?.regionalMultiplier && estimate.metadata.regionalMultiplier !== 1.0 ? `
+                                <p><strong>🌍 Regional Adjustment:</strong> ${estimate.metadata.regionalMultiplier.toFixed(2)}x (cost of living adjustment)</p>
+                            ` : ''}
+                            <p><strong>📦 Quantity:</strong> ${quantity} pieces</p>
+                            <p><strong>📏 Size:</strong> ${width}" x ${height}" (${area} sq inches each)</p>
+                            <p><strong>📅 Generated:</strong> ${new Date().toLocaleDateString()}</p>
+                            ${estimate.reasoning ? `
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                                    <strong>💡 AI Analysis:</strong>
+                                    <p style="margin: 5px 0;">${estimate.reasoning}</p>
+                                </div>
+                            ` : ''}
+                            ${estimate.recommendations && estimate.recommendations.length > 0 ? `
+                                <div style="background: #e8f5e9; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                                    <strong>✨ Recommendations:</strong>
+                                    <ul style="margin: 5px 0; padding-left: 20px;">
+                                        ${estimate.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+                resultDiv.innerHTML = resultHtml;
+                resultDiv.style.display = 'block';
+                
+                document.getElementById('exportButtons').style.display = 'flex';
+
+            } catch (error) {
+                console.error('Error getting estimate:', error);
+                
+                // Fallback to client-side calculation
+                const area = width * height;
+                const sqInchPrice = materialPrices[vinylType] / (12 * 48);
+                const materialCost = area * sqInchPrice * quantity;
+
+                let laborTime = 0.25;
+                laborTime += (area / 144) * 0.5;
+                if (complexWeeding) laborTime *= 1.5;
+                laborTime *= quantity;
+
+                const laborCost = laborTime * laborRate;
+                const setupCost = 5;
+                const rushFee = rush ? (materialCost + laborCost) * 0.25 : 0;
+                const overhead = (materialCost + laborCost + setupCost) * 0.15;
+                const profit = (materialCost + laborCost + setupCost + overhead) * 0.20;
+                const total = materialCost + laborCost + setupCost + overhead + profit + rushFee;
+
+                const resultHtml = `
+                    <div class="quote-container">
+                        <div style="background: #ffebee; border: 1px solid #f44336; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                            <strong>⚠️ Connection Error:</strong> Using offline calculation. AI features unavailable.
+                        </div>
+                        <h2 style="color: var(--cricut-green);">Vinyl Project Quote</h2>
+                        <table>
+                            <tr>
+                                <td>Material (${materialPrices[vinylType]}/roll)</td>
+                                <td>USD ${materialCost.toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <td>Labor (${laborTime.toFixed(2)} hrs @ USD ${laborRate}/hr)</td>
+                                <td>USD ${laborCost.toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <td>Setup Fee</td>
+                                <td>USD ${setupCost.toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <td>Overhead (15%)</td>
+                                <td>USD ${overhead.toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <td>Profit (20%)</td>
+                                <td>USD ${profit.toFixed(2)}</td>
+                            </tr>
+                            ${rush ? `
+                            <tr>
+                                <td>Rush Fee</td>
+                                <td>USD ${rushFee.toFixed(2)}</td>
+                            </tr>
+                            ` : ''}
+                            <tr>
+                                <th>Total Quote</th>
+                                <th>USD ${total.toFixed(2)}</th>
+                            </tr>
+                        </table>
+                        <div style="margin-top: 15px; font-size: 0.9em; color: #666;">
+                            <p>*Based on Cricut material prices</p>
+                            <p>*Quantity: ${quantity} pieces</p>
+                            <p>*Size: ${width}" x ${height}" (${area} sq inches each)</p>
+                            <p>*Generated on: ${new Date().toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                `;
+
+                resultDiv.innerHTML = resultHtml;
+                resultDiv.style.display = 'block';
+                
+                document.getElementById('exportButtons').style.display = 'flex';
+            }
         });
 
         function exportAsPDF() {
