@@ -74,15 +74,25 @@ vercel
 
 ### 6. Configure Environment Variables in Vercel
 
+**Important**: Environment variables must be configured in the Vercel Dashboard, not in `vercel.json`. This is for security - never commit API keys to your repository.
+
 1. Go to your project in Vercel Dashboard
 2. Navigate to **Settings** > **Environment Variables**
 3. Add the following variables:
 
+   **Required:**
    - **Name**: `OPENAI_API_KEY`
-   - **Value**: Your OpenAI API key (sk-...)
+   - **Value**: Your OpenAI API key (sk-proj-...)
+   - **Environments**: Select all (Production, Preview, Development)
+
+   **Optional:**
+   - **Name**: `VERCEL_AI_GATEWAY_URL`
+   - **Value**: Your AI Gateway URL (if using Vercel AI Gateway)
    - **Environments**: Select all (Production, Preview, Development)
 
 4. Click "Save"
+
+5. Redeploy your application for changes to take effect
 
 ## Optional: Vercel AI Gateway Setup
 

@@ -3,7 +3,7 @@ import { OpenAI } from 'openai';
 // Initialize OpenAI client with Vercel AI Gateway
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  baseURL: process.env.VERCEL_AI_GATEWAY_URL || 'https://gateway.ai.cloudflare.com/v1/vercel/openai',
+  baseURL: process.env.VERCEL_AI_GATEWAY_URL || 'https://api.openai.com/v1',
 });
 
 // Regional pricing multipliers based on cost of living
@@ -197,8 +197,9 @@ function calculateFallbackEstimate(data) {
   const baseMaterialPrice = materialPrices[vinylType];
   const sqInchPrice = (baseMaterialPrice * regionalMultiplier) / ROLL_SIZE;
   
-  const materialCost = area * sqInchPrice * quantity * 1.15; // 15% waste factor
-  const materialWaste = materialCost * 0.15;
+  const baseMaterialCost = area * sqInchPrice * quantity;
+  const materialWaste = baseMaterialCost * 0.15; // 15% waste factor
+  const materialCost = baseMaterialCost + materialWaste;
 
   let laborTime = 0.25; // Base setup time
   laborTime += (area / 144) * 0.5; // Time per square foot
